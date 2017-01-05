@@ -1,0 +1,35 @@
+machine:
+  xcode:
+    version: "8.2"
+  environment:
+    XCODE_WORKSPACE: NotUsed.xcworkspace
+    XCODE_SCHEME: NotUsed
+    GOPATH: $HOME/.go_project
+    HOMEBREW_NO_AUTO_UPDATE: 1
+    HOMEBREW_CACHE: $HOME/.cache/Homebrew
+    HOMEBREW_DEBUG: 1
+    HOMEBREW_DEVELOPER: 1
+    HOMEBREW_VERBOSE: 1
+
+dependencies:
+  pre:
+    - system_profiler SPHardwareDataType
+    - sw_vers
+    - sudo sysctl -a
+    - softwareupdate --list
+    - softwareupdate --install 'Command Line Tools (macOS El Capitan version 10.11) for Xcode-8.2' || true
+  override:
+    - ./scripts/codesign_setup.sh lldb_codesign
+
+test:
+  pre:
+    - brew update
+  override:
+    - brew install awscli
+    - brew install https://github.com/Homebrew/homebrew-core/raw/master/Formula/llvm.rb --with-all-targets --with-shared-libs --with-toolchain
+
+deployment:
+  prod:
+    branch: master
+    commands:
+      - aws s3 sync /usr/local/Cellar/llvm s3://s3.zchee.io/ci/circleci/llvm
